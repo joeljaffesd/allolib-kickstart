@@ -3,7 +3,7 @@
 # Configure debug build
 (
   mkdir -p build/Debug
-  cmake -DCMAKE_BUILD_TYPE=Debug -Wno-deprecated -DBUILD_EXAMPLES=0 -B build/Debug -S .
+  cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Debug -DRTAUDIO_API_JACK=OFF -DRTMIDI_API_JACK=OFF -Wno-deprecated -DBUILD_EXAMPLES=0 -B build/Debug -S .
 )
 
 (
