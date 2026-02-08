@@ -1,0 +1,68 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    name: "Build on ${{ matrix.name }}"
+
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-22.04
+            name: Linux
+          - os: windows-latest
+            name: Windows
+          - os: macos-latest
+            name: macOS
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies (Linux)
+      if: matrix.os == 'ubuntu-22.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential \
+        libsndfile1-dev libassimp-dev libasound2-dev libxrandr-dev \
+        libopengl-dev libxinerama-dev libxcursor-dev libxi-dev \
+        libgl1-mesa-dev libglu1-mesa-dev libxmu-dev libxi-dev
+
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install cmake libsndfile assimp
+
+    - name: Install dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Windows dependencies will be handled by vcpkg or similar in CMake
+
+    - name: Initialize submodules
+      run: |
+        git submodule update --recursive --init --filter=blob:none
+      shell: bash
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release -DRTAUDIO_API_JACK=OFF -DRTMIDI_API_JACK=OFF -Wno-deprecated -DBUILD_EXAMPLES=0
+      shell: bash
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release
+      shell: bash
